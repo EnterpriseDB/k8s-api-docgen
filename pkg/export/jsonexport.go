@@ -1,9 +1,10 @@
+// Package export contain the code exporting the internal data to the user
 package export
 
 import (
-	"cnp-docgen/parser"
 	"encoding/json"
-	"strings"
+
+	"github.com/EnterpriseDB/k8s-api-docgen/pkg/parser"
 )
 
 // k8s types for generation of docs
@@ -21,11 +22,11 @@ type kubeItem struct {
 	Mandatory bool   `json:"required"`
 }
 
-// Get a slice of KubeTypes as input and return the JSON documentation.
+// ToJSON get a slice of KubeTypes as input and return the JSON documentation.
 // JSON fields are the ones defined in kubeTypes (and kubeItem) definition.
 func ToJSON(kt []parser.KubeTypes) (string, error) {
-	var kubeDocs []kubeTypes
-	for _, kubeType := range kt {
+	kubeDocs := make([]kubeTypes, len(kt))
+	for idx, kubeType := range kt {
 		var k kubeTypes
 		var kItems []kubeItem
 		for i, item := range kubeType {
@@ -43,10 +44,9 @@ func ToJSON(kt []parser.KubeTypes) (string, error) {
 			}
 		}
 		k.Items = kItems
-		kubeDocs = append(kubeDocs, k)
+		kubeDocs[idx] = k
 	}
-	// to JSON with indentation
+
 	j, err := json.MarshalIndent(kubeDocs, "", "\t")
-	// trim "\n"
-	return strings.Replace(string(j), `\n`, "", -1), err
+	return string(j), err
 }
