@@ -32,14 +32,15 @@ func Extract(kubeTypes []parser.KubeTypes, format string) (string, error) {
 // is empty the documentation is written to stdout
 func Output(fileName string, content string) error {
 	outputStream := os.Stdout
+	var err error
 	if fileName != "" {
-		outputStream, err := os.OpenFile(fileName, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600) // #nosec
+		outputStream, err = os.OpenFile(fileName, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600) // #nosec
 		if err != nil {
 			return err
 		}
 
 		defer func() {
-			err := outputStream.Close()
+			err = outputStream.Close()
 			if err != nil {
 				log.Log.Error(err, "Cannot close output file",
 					"fileName", fileName)
@@ -47,6 +48,7 @@ func Output(fileName string, content string) error {
 		}()
 	}
 
-	_, err := outputStream.Write([]byte(content))
+	_, err = outputStream.Write([]byte(content))
+
 	return err
 }

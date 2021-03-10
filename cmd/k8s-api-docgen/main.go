@@ -2,6 +2,8 @@ package main
 
 import (
 	"flag"
+	"fmt"
+	"os"
 
 	"github.com/EnterpriseDB/k8s-api-docgen/internal/docgen"
 	"github.com/EnterpriseDB/k8s-api-docgen/internal/log"
@@ -13,7 +15,25 @@ func main() {
 	out := flag.String("o", "", "Write output to the given named file. By default "+
 		"the output will be written to stdout")
 
+	var CommandLine = flag.NewFlagSet(os.Args[0], flag.ExitOnError)
+
+	flag.Usage = func() {
+		fmt.Fprintf(CommandLine.Output(), "Usage:\n  k8s-api-docgen [flags] path\n\n")
+		flag.PrintDefaults()
+	}
+
 	flag.Parse()
+
+	if len(os.Args) <= 1 {
+		flag.Usage()
+		return
+	}
+
+	if *format != "json" {
+		fmt.Printf("Error: %v\n", docgen.ErrorWrongOutputFormat)
+		flag.Usage()
+		return
+	}
 
 	var kubeTypes []parser.KubeTypes
 	kubeTypes, err := parser.GetKubeTypes(flag.Args())
