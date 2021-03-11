@@ -1,0 +1,74 @@
+linters-settings:
+  lll:
+    line-length: 120
+
+linters:
+  # please, do not use `enable-all`: it's deprecated and will be removed soon.
+  # inverted configuration with `enable-all` and `disable` is not scalable during updates of golangci-lint
+  disable-all: true
+  enable:
+    - bodyclose
+    - deadcode
+    - depguard
+    - dogsled
+    - dupl
+    - errcheck
+    - gocognit
+    - goconst
+    - gocritic
+    - gocyclo
+    - gofmt
+    - goimports
+    - golint
+    - gomodguard
+    - goprintffuncname
+    - gosec
+    - gosimple
+    - govet
+    - ineffassign
+    - lll
+    - misspell
+    - nakedret
+    - nestif
+    - prealloc
+    - rowserrcheck
+    - scopelint
+    - staticcheck
+    - structcheck
+    - stylecheck
+    - typecheck
+    - unconvert
+    - unparam
+    - unused
+    - varcheck
+    - whitespace
+
+  # don't enable:
+  # - funlen
+  # - gochecknoglobals
+  # - gochecknoinits
+  # - godot
+  # - godox
+  # - gomnd
+  # - testpackage
+  # - wsl
+
+run:
+  skip-files: "zz_generated.*"
+
+issues:
+  exclude-rules:
+    # Exclude lll issues for lines with long annotations
+    - linters:
+      - lll
+      source: "//\\s*\\+"
+    # We have no control of this in zz_generated files and it looks like that excluding those files is not enough
+    # so we disable "ST1016: methods on the same type should have the same receiver name" in api directory
+    - linters:
+      - stylecheck
+      text: "ST1016:"
+      path: api/
+    - linters:
+      - dupl
+      path: api/v1alpha1/.*_webhook\.go
+  exclude-use-default: false
