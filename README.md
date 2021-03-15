@@ -46,4 +46,6 @@ create a file, you can use the `-o` option as follows:
 
 ## Copyright
 
-Copyright (C) 2021 EnterpriseDB.
+`k8s-api-docgen` is distributed under Apache License 2.0.
+Copyright (C) 2021 EnterpriseDB Corporation.
+Some portions Copyright 2016 The prometheus-operator Authors.
