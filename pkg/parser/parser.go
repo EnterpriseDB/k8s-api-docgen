@@ -50,7 +50,7 @@ func GetKubeTypes(filePaths []string) ([]KubeTypes, error) {
 	// add internal types link into map, in order to support md generation of references,
 	// in order to be compliant with MarkDown output
 	for _, internalType := range n.Types {
-		internalTypeLinks[internalType.Name] = "[" + internalType.Name + "](#" + internalType.Name + ")"
+		internalTypeLinks[internalType.Name] = "#" + internalType.Name
 	}
 
 	var docForTypes []KubeTypes
