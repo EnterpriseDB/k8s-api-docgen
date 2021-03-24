@@ -30,14 +30,14 @@ import (
 // https://github.com/prometheus-operator/prometheus-operator/tree/master/cmd/po-docgen
 // ------------------------------------------------------------------------------------------------------------------
 
-// Pair of strings. We need the name of fields and the doc
-type Pair struct {
-	Name, Doc, Type string
-	Mandatory       bool
+// Fields is a struct with all the types we need to generate docs
+type Fields struct {
+	Name, NameWithAnchor, Doc, Type, RawType string
+	Mandatory                                bool
 }
 
 // KubeTypes is an array to represent all available types in a parsed file. [0] is for the type itself
-type KubeTypes []Pair
+type KubeTypes []Fields
 
 const (
 	docPrefix = "https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.20/"
@@ -45,19 +45,25 @@ const (
 
 var (
 	links = map[string]string{
-		"metav1.ObjectMeta":        docPrefix + "#objectmeta-v1-meta",
-		"metav1.ListMeta":          docPrefix + "#listmeta-v1-meta",
-		"metav1.LabelSelector":     docPrefix + "#labelselector-v1-meta",
-		"v1.ResourceRequirements":  docPrefix + "#resourcerequirements-v1-core",
-		"v1.LocalObjectReference":  docPrefix + "#localobjectreference-v1-core",
-		"v1.SecretKeySelector":     docPrefix + "#secretkeyselector-v1-core",
-		"v1.PersistentVolumeClaim": docPrefix + "#persistentvolumeclaim-v1-core",
-		"v1.EmptyDirVolumeSource":  docPrefix + "#emptydirvolumesource-v1-core",
-		"apiextensionsv1.JSON":     docPrefix + "#json-v1-apiextensions-k8s-io",
+		"metav1.ObjectMeta":                docPrefix + "#objectmeta-v1-meta",
+		"metav1.ListMeta":                  docPrefix + "#listmeta-v1-meta",
+		"metav1.LabelSelector":             docPrefix + "#labelselector-v1-meta",
+		"metav1.Time":                      docPrefix + "#time-v1-meta",
+		"v1.ResourceRequirements":          docPrefix + "#resourcerequirements-v1-core",
+		"v1.LocalObjectReference":          docPrefix + "#localobjectreference-v1-core",
+		"v1.SecretKeySelector":             docPrefix + "#secretkeyselector-v1-core",
+		"v1.PersistentVolumeClaim":         docPrefix + "#persistentvolumeclaim-v1-core",
+		"v1.EmptyDirVolumeSource":          docPrefix + "#emptydirvolumesource-v1-core",
+		"apiextensionsv1.JSON":             docPrefix + "#json-v1-apiextensions-k8s-io",
+		"corev1.LocalObjectReference":      docPrefix + "#localobjectreference-v1-core",
+		"corev1.ResourceRequirements":      docPrefix + "#resourcerequirements-v1-core",
+		"corev1.PersistentVolumeClaimSpec": docPrefix + "#persistentvolumeclaim-v1-core",
+		"corev1.SecretKeySelector":         docPrefix + "#secretkeyselector-v1-core",
 	}
 
-	selfLinks = map[string]string{}
-	typesDoc  = map[string]KubeTypes{}
+	selfLinks         = map[string]string{}
+	typesDoc          = map[string]KubeTypes{}
+	internalTypeLinks = map[string]string{}
 )
 
 func fmtRawDoc(rawDoc string) string {
@@ -112,6 +118,15 @@ func toLink(typeName string) string {
 	}
 
 	return typeName
+}
+
+func toLinkWithCustomTypes(typeName string) string {
+	link, hasLink := internalTypeLinks[typeName]
+	if hasLink {
+		return wrapInLink(typeName, link)
+	}
+
+	return toLink(typeName)
 }
 
 func wrapInLink(text, link string) string {
@@ -170,19 +185,25 @@ func fieldRequired(field *ast.Field) bool {
 	return false
 }
 
-func fieldType(typ ast.Expr) string {
+func fieldType(typ ast.Expr, isRaw bool) string {
+	var applyLink func(string) string
+	if isRaw {
+		applyLink = toLinkWithCustomTypes
+	} else {
+		applyLink = toLink
+	}
 	switch ft := typ.(type) {
 	case *ast.Ident:
-		return toLink(ft.Name)
+		return applyLink(ft.Name)
 	case *ast.StarExpr:
-		return "*" + toLink(fieldType(ft.X))
+		return "*" + applyLink(fieldType(ft.X, false))
 	case *ast.SelectorExpr:
 		pkg := ft.X.(*ast.Ident)
-		return toLink(pkg.Name + "." + ft.Sel.Name)
+		return applyLink(pkg.Name + "." + ft.Sel.Name)
 	case *ast.ArrayType:
-		return "[]" + toLink(fieldType(ft.Elt))
+		return "[]" + applyLink(fieldType(ft.Elt, false))
 	case *ast.MapType:
-		return "map[" + toLink(fieldType(ft.Key)) + "]" + toLink(fieldType(ft.Value))
+		return "map[" + applyLink(fieldType(ft.Key, false)) + "]" + applyLink(fieldType(ft.Value, false))
 	default:
 		return ""
 	}

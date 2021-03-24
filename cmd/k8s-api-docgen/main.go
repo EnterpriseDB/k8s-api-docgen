@@ -27,7 +27,8 @@ import (
 )
 
 func main() {
-	format := flag.String("t", "json", `Output format. The only supported one is "json"`)
+	format := flag.String("t", "json",
+		`Output format. The only supported ones are "json" (JSON) and "md" (Markdown)`)
 	out := flag.String("o", "", "Write output to the given named file. By default "+
 		"the output will be written to stdout")
 
@@ -45,7 +46,7 @@ func main() {
 		return
 	}
 
-	if *format != "json" {
+	if *format != "json" && *format != "md" {
 		fmt.Printf("Error: %v\n", docgen.ErrorWrongOutputFormat)
 		flag.Usage()
 		return
@@ -67,6 +68,6 @@ func main() {
 	}
 
 	if err = docgen.Output(*out, output); err != nil {
-		log.Log.Error(err, "Cannot write JSON output")
+		log.Log.Error(err, "Cannot write output file")
 	}
 }

@@ -38,6 +38,8 @@ func Extract(kubeTypes []parser.KubeTypes, format string) (string, error) {
 	switch format {
 	case "json":
 		return export.ToJSON(kubeTypes)
+	case "md":
+		return export.ToMd(kubeTypes)
 
 	default:
 		return "", ErrorWrongOutputFormat
