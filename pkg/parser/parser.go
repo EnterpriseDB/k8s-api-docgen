@@ -30,10 +30,10 @@ import (
 
 // GetKubeTypes return the k8s types into a slice
 func GetKubeTypes(filePaths []string) ([]KubeTypes, error) {
-	fset := token.NewFileSet()
+	fSet := token.NewFileSet()
 	m := make(map[string]*ast.File)
 	for _, filePath := range filePaths {
-		f, err := parser.ParseFile(fset, filePath, nil, parser.ParseComments)
+		f, err := parser.ParseFile(fSet, filePath, nil, parser.ParseComments)
 		if err != nil {
 			return nil, err
 		}
@@ -43,37 +43,50 @@ func GetKubeTypes(filePaths []string) ([]KubeTypes, error) {
 	// The errors raised by the creation of the Package AST are not considered as
 	// we don't need to fully type-check the code and we don't have access to all
 	// the types reachable by the code
-	apkg, _ := ast.NewPackage(fset, m, nil, nil)
+	apkg, _ := ast.NewPackage(fSet, m, nil, nil)
 
 	n := doc.New(apkg, "", 0)
+
+	// add internal types link into map, in order to support md generation of references,
+	// in order to be compliant with MarkDown output
+	for _, internalType := range n.Types {
+		internalTypeLinks[internalType.Name] = "[" + internalType.Name + "](#" + internalType.Name + ")"
+	}
 
 	var docForTypes []KubeTypes
 
 	for _, kubType := range n.Types {
 		if structType, ok := kubType.Decl.Specs[0].(*ast.TypeSpec).Type.(*ast.StructType); ok {
 			var ks KubeTypes
-			ks = append(ks, Pair{kubType.Name, fmtRawDoc(kubType.Doc), "", false})
+			ks = append(ks, Fields{kubType.Name, applyAnchor(kubType.Name),
+				fmtRawDoc(kubType.Doc), "", "", false})
 
 			for _, field := range structType.Fields.List {
 				// Treat inlined fields separately as we don't want the original types to appear in the doc.
 				if isInlined(field) {
 					// Skip external types, as we don't want their content to be part of the API documentation.
 					if isInternalType(field.Type) {
-						ks = append(ks, typesDoc[fieldType(field.Type)]...)
+						ks = append(ks, typesDoc[fieldType(field.Type, false)]...)
 					}
 					continue
 				}
 
-				typeString := fieldType(field.Type)
+				typeString := fieldType(field.Type, false)
+				rawTypeString := fieldType(field.Type, true)
 				fieldMandatory := fieldRequired(field)
 				if n := fieldName(field); n != "-" {
 					fieldDoc := fmtRawDoc(field.Doc.Text())
-					ks = append(ks, Pair{n, fieldDoc, typeString, fieldMandatory})
+					ks = append(ks, Fields{n, "", fieldDoc,
+						typeString, rawTypeString, fieldMandatory})
 				}
 			}
 			docForTypes = append(docForTypes, ks)
 		}
 	}
-
 	return docForTypes, nil
+}
+
+// applyAnchor applies an anchor to name, in order to be compliant with MarkDown output
+func applyAnchor(name string) string {
+	return `<a name="` + name + `"></a> ` + name
 }
