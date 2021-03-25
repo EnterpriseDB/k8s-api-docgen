@@ -31,16 +31,16 @@ const (
 // k8s types for generation of docs
 type kubeTypes struct {
 	Name                      string `json:"name"`
-	NameWithAnchor            string
+	NameWithAnchor            string `json:"-"`
 	Doc                       string     `json:"description"`
 	Items                     []kubeItem `json:"items"`
 	maxSizeOfTableFields      [4]float64
-	TableFieldName            string
-	TableFieldNameDashSize    string
-	TableFieldDoc             string
-	TableFieldDocDashSize     string
-	TableFieldRawType         string
-	TableFieldRawTypeDashSize string
+	TableFieldName            string `json:"-"`
+	TableFieldNameDashSize    string `json:"-"`
+	TableFieldDoc             string `json:"-"`
+	TableFieldDocDashSize     string `json:"-"`
+	TableFieldRawType         string `json:"-"`
+	TableFieldRawTypeDashSize string `json:"-"`
 }
 
 // k8s items
@@ -48,7 +48,7 @@ type kubeItem struct {
 	Name      string `json:"field"`
 	Doc       string `json:"description"`
 	Type      string `json:"schema"`
-	RawType   string
+	RawType   string `json:"-"`
 	Mandatory bool `json:"required"`
 }
 
