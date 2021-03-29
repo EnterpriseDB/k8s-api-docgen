@@ -29,7 +29,8 @@ import (
 )
 
 // GetKubeTypes return the k8s types into a slice
-func GetKubeTypes(filePaths []string) ([]KubeTypes, error) {
+func GetKubeTypes(filePaths []string) (KubeTypes, error) {
+	// Parse the input files or exit with an error state
 	fSet := token.NewFileSet()
 	m := make(map[string]*ast.File)
 	for _, filePath := range filePaths {
@@ -47,46 +48,37 @@ func GetKubeTypes(filePaths []string) ([]KubeTypes, error) {
 
 	n := doc.New(apkg, "", 0)
 
-	// add internal types link into map, in order to support md generation of references,
-	// in order to be compliant with MarkDown output
-	for _, internalType := range n.Types {
-		internalTypeLinks[internalType.Name] = "#" + internalType.Name
-	}
-
-	var docForTypes []KubeTypes
+	var docForTypes KubeTypes
 
 	for _, kubType := range n.Types {
 		if structType, ok := kubType.Decl.Specs[0].(*ast.TypeSpec).Type.(*ast.StructType); ok {
-			var ks KubeTypes
-			ks = append(ks, Fields{kubType.Name, applyAnchor(kubType.Name),
-				fmtRawDoc(kubType.Doc), "", "", false})
+			kubeStructure := KubeStructure{
+				Name: kubType.Name,
+				Doc:  fmtRawDoc(kubType.Doc),
+			}
 
 			for _, field := range structType.Fields.List {
-				// Treat inlined fields separately as we don't want the original types to appear in the doc.
+				// TODO: manage inlined fields
 				if isInlined(field) {
-					// Skip external types, as we don't want their content to be part of the API documentation.
-					if isInternalType(field.Type) {
-						ks = append(ks, typesDoc[fieldType(field.Type, false)]...)
-					}
+					// TODO: Ask Gabriele why typesDoc was not used
 					continue
 				}
 
-				typeString := fieldType(field.Type, false)
-				rawTypeString := fieldType(field.Type, true)
+				typeInfo := fieldType(field.Type)
 				fieldMandatory := fieldRequired(field)
 				if n := fieldName(field); n != "-" {
 					fieldDoc := fmtRawDoc(field.Doc.Text())
-					ks = append(ks, Fields{n, "", fieldDoc,
-						typeString, rawTypeString, fieldMandatory})
+					kubeStructure.Fields = append(kubeStructure.Fields,
+						KubeField{
+							Name:      n,
+							Type:      typeInfo,
+							Doc:       fieldDoc,
+							Mandatory: fieldMandatory,
+						})
 				}
 			}
-			docForTypes = append(docForTypes, ks)
+			docForTypes = append(docForTypes, kubeStructure)
 		}
 	}
 	return docForTypes, nil
-}
-
-// applyAnchor applies an anchor to name, in order to be compliant with MarkDown output
-func applyAnchor(name string) string {
-	return `<a name="` + name + `"></a> ` + name
 }
