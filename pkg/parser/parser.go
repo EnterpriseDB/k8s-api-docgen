@@ -29,11 +29,12 @@ import (
 )
 
 // GetKubeTypes return the k8s types into a slice
-func GetKubeTypes(filePaths []string) ([]KubeTypes, error) {
-	fset := token.NewFileSet()
+func GetKubeTypes(filePaths []string) (KubeTypes, error) {
+	// Parse the input files or exit with an error state
+	fSet := token.NewFileSet()
 	m := make(map[string]*ast.File)
 	for _, filePath := range filePaths {
-		f, err := parser.ParseFile(fset, filePath, nil, parser.ParseComments)
+		f, err := parser.ParseFile(fSet, filePath, nil, parser.ParseComments)
 		if err != nil {
 			return nil, err
 		}
@@ -43,37 +44,41 @@ func GetKubeTypes(filePaths []string) ([]KubeTypes, error) {
 	// The errors raised by the creation of the Package AST are not considered as
 	// we don't need to fully type-check the code and we don't have access to all
 	// the types reachable by the code
-	apkg, _ := ast.NewPackage(fset, m, nil, nil)
+	apkg, _ := ast.NewPackage(fSet, m, nil, nil)
 
 	n := doc.New(apkg, "", 0)
 
-	var docForTypes []KubeTypes
+	var docForTypes KubeTypes
 
 	for _, kubType := range n.Types {
 		if structType, ok := kubType.Decl.Specs[0].(*ast.TypeSpec).Type.(*ast.StructType); ok {
-			var ks KubeTypes
-			ks = append(ks, Pair{kubType.Name, fmtRawDoc(kubType.Doc), "", false})
+			kubeStructure := KubeStructure{
+				Name: kubType.Name,
+				Doc:  fmtRawDoc(kubType.Doc),
+			}
 
 			for _, field := range structType.Fields.List {
-				// Treat inlined fields separately as we don't want the original types to appear in the doc.
+				// TODO: manage inlined fields
 				if isInlined(field) {
-					// Skip external types, as we don't want their content to be part of the API documentation.
-					if isInternalType(field.Type) {
-						ks = append(ks, typesDoc[fieldType(field.Type)]...)
-					}
+					// TODO: Ask Gabriele why typesDoc was not used
 					continue
 				}
 
-				typeString := fieldType(field.Type)
+				typeInfo := fieldType(field.Type)
 				fieldMandatory := fieldRequired(field)
 				if n := fieldName(field); n != "-" {
 					fieldDoc := fmtRawDoc(field.Doc.Text())
-					ks = append(ks, Pair{n, fieldDoc, typeString, fieldMandatory})
+					kubeStructure.Fields = append(kubeStructure.Fields,
+						KubeField{
+							Name:      n,
+							Type:      typeInfo,
+							Doc:       fieldDoc,
+							Mandatory: fieldMandatory,
+						})
 				}
 			}
-			docForTypes = append(docForTypes, ks)
+			docForTypes = append(docForTypes, kubeStructure)
 		}
 	}
-
 	return docForTypes, nil
 }

@@ -30,35 +30,56 @@ import (
 // https://github.com/prometheus-operator/prometheus-operator/tree/master/cmd/po-docgen
 // ------------------------------------------------------------------------------------------------------------------
 
-// Pair of strings. We need the name of fields and the doc
-type Pair struct {
-	Name, Doc, Type string
-	Mandatory       bool
+// KubeField is a struct with all the types we need to generate docs
+type KubeField struct {
+	// The field name (in the JSON representation of this object)
+	Name string
+
+	// The field type
+	Type TypeInfo
+
+	// The normalized documentation
+	Doc string
+
+	// Mandatory flag
+	Mandatory bool
+}
+
+// TypeInfo is a struct representing a type with a given name and it's base type name.
+// I.e. a type named `[]Pod` has `Pod` as a base type. Atomic types have `Name == BaseName`.
+//
+// We are adopting a simplification here: we consider only type constructors with 1 parameter.
+// The only multiple-arity type constructor we have is `map[T1]T2` and, since kubernetes
+// resources must be JSON-serializable, T1 == string. Given that, T1 is not interesting and
+// we are only using T2 as base type.
+type TypeInfo struct {
+	// The type name (i.e. `[]Pod`)
+	Name string
+
+	// The base type name (i.e. `Pod`)
+	BaseType string
+
+	// The type-constructor who generated the type (i.e. `[]`)
+	Constructor string
+
+	// True if the type is internal to this package and false otherwise
+	Internal bool
+}
+
+// KubeStructure represent a structure that we need to document
+type KubeStructure struct {
+	// The structure name
+	Name string
+
+	// The normalized documentation
+	Doc string
+
+	// The structure fields
+	Fields []KubeField
 }
 
 // KubeTypes is an array to represent all available types in a parsed file. [0] is for the type itself
-type KubeTypes []Pair
-
-const (
-	docPrefix = "https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.20/"
-)
-
-var (
-	links = map[string]string{
-		"metav1.ObjectMeta":        docPrefix + "#objectmeta-v1-meta",
-		"metav1.ListMeta":          docPrefix + "#listmeta-v1-meta",
-		"metav1.LabelSelector":     docPrefix + "#labelselector-v1-meta",
-		"v1.ResourceRequirements":  docPrefix + "#resourcerequirements-v1-core",
-		"v1.LocalObjectReference":  docPrefix + "#localobjectreference-v1-core",
-		"v1.SecretKeySelector":     docPrefix + "#secretkeyselector-v1-core",
-		"v1.PersistentVolumeClaim": docPrefix + "#persistentvolumeclaim-v1-core",
-		"v1.EmptyDirVolumeSource":  docPrefix + "#emptydirvolumesource-v1-core",
-		"apiextensionsv1.JSON":     docPrefix + "#json-v1-apiextensions-k8s-io",
-	}
-
-	selfLinks = map[string]string{}
-	typesDoc  = map[string]KubeTypes{}
-)
+type KubeTypes []KubeStructure
 
 func fmtRawDoc(rawDoc string) string {
 	var buffer bytes.Buffer
@@ -100,44 +121,10 @@ func fmtRawDoc(rawDoc string) string {
 	return strings.TrimRight(buffer.String(), "\n")
 }
 
-func toLink(typeName string) string {
-	selfLink, hasSelfLink := selfLinks[typeName]
-	if hasSelfLink {
-		return wrapInLink(typeName, selfLink)
-	}
-
-	link, hasLink := links[typeName]
-	if hasLink {
-		return wrapInLink(typeName, link)
-	}
-
-	return typeName
-}
-
-func wrapInLink(text, link string) string {
-	return fmt.Sprintf("[%s](%s)", text, link)
-}
-
 func isInlined(field *ast.Field) bool {
 	jsonTag := reflect.StructTag(
 		field.Tag.Value[1 : len(field.Tag.Value)-1]).Get("json") // Delete first and last quotation
 	return strings.Contains(jsonTag, "inline")
-}
-
-func isInternalType(typ ast.Expr) bool {
-	switch it := typ.(type) {
-	case *ast.SelectorExpr:
-		pkg := it.X.(*ast.Ident)
-		return strings.HasPrefix(pkg.Name, "monitoring")
-	case *ast.StarExpr:
-		return isInternalType(it.X)
-	case *ast.ArrayType:
-		return isInternalType(it.Elt)
-	case *ast.MapType:
-		return isInternalType(it.Key) && isInternalType(it.Value)
-	default:
-		return true
-	}
 }
 
 // fieldName returns the name of the field as it should appear in JSON format
@@ -170,20 +157,45 @@ func fieldRequired(field *ast.Field) bool {
 	return false
 }
 
-func fieldType(typ ast.Expr) string {
+func fieldType(typ ast.Expr) TypeInfo {
 	switch ft := typ.(type) {
 	case *ast.Ident:
-		return toLink(ft.Name)
+		return TypeInfo{
+			Name:        ft.Name,
+			BaseType:    ft.Name,
+			Constructor: "",
+			Internal:    true,
+		}
 	case *ast.StarExpr:
-		return "*" + toLink(fieldType(ft.X))
+		return TypeInfo{
+			Name:        "*" + fieldType(ft.X).Name,
+			BaseType:    fieldType(ft.X).Name,
+			Constructor: "*",
+			Internal:    fieldType(ft.X).Internal,
+		}
 	case *ast.SelectorExpr:
 		pkg := ft.X.(*ast.Ident)
-		return toLink(pkg.Name + "." + ft.Sel.Name)
+		return TypeInfo{
+			Name:        pkg.Name + "." + ft.Sel.Name,
+			BaseType:    pkg.Name + "." + ft.Sel.Name,
+			Constructor: "",
+			Internal:    false,
+		}
 	case *ast.ArrayType:
-		return "[]" + toLink(fieldType(ft.Elt))
+		return TypeInfo{
+			Name:        "[]" + fieldType(ft.Elt).Name,
+			BaseType:    fieldType(ft.Elt).Name,
+			Constructor: "[]",
+			Internal:    fieldType(ft.Elt).Internal,
+		}
 	case *ast.MapType:
-		return "map[" + toLink(fieldType(ft.Key)) + "]" + toLink(fieldType(ft.Value))
+		return TypeInfo{
+			Name:        fmt.Sprintf("map[%v]%v", fieldType(ft.Key).Name, fieldType(ft.Value).Name),
+			BaseType:    fieldType(ft.Value).Name,
+			Constructor: "map[]",
+			Internal:    fieldType(ft.Value).Internal,
+		}
 	default:
-		return ""
+		return TypeInfo{}
 	}
 }

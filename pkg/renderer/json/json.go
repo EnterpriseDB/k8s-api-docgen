@@ -14,8 +14,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-// Package export contain the code exporting the internal data to the user
-package export
+// Package json contain the code exporting the internal data to JSON
+package json
 
 import (
 	"encoding/json"
@@ -24,7 +24,7 @@ import (
 )
 
 // k8s types for generation of docs
-type kubeTypes struct {
+type kubeType struct {
 	Name  string     `json:"name"`
 	Doc   string     `json:"description"`
 	Items []kubeItem `json:"items"`
@@ -38,30 +38,32 @@ type kubeItem struct {
 	Mandatory bool   `json:"required"`
 }
 
-// ToJSON get a slice of KubeTypes as input and return the JSON documentation.
-// JSON fields are the ones defined in kubeTypes (and kubeItem) definition.
-func ToJSON(kt []parser.KubeTypes) (string, error) {
-	kubeDocs := make([]kubeTypes, len(kt))
-	for idx, kubeType := range kt {
-		var k kubeTypes
-		var kItems []kubeItem
-		for i, item := range kubeType {
-			if i != 0 {
-				kItems = append(kItems, kubeItem{
-					Name:      item.Name,
-					Doc:       item.Doc,
-					Type:      item.Type,
-					Mandatory: item.Mandatory,
-				})
-			} else {
-				k.Name = item.Name
-				k.Doc = item.Doc
-				k.Items = kItems
-			}
+func convertToKubeTypes(kt parser.KubeTypes) []kubeType {
+	kubeDocs := make([]kubeType, len(kt))
+	for idx, kubeStructure := range kt {
+		k := kubeType{
+			Name:  kubeStructure.Name,
+			Doc:   kubeStructure.Doc,
+			Items: nil,
 		}
-		k.Items = kItems
+
+		for _, item := range kubeStructure.Fields {
+			k.Items = append(k.Items, kubeItem{
+				Name:      item.Name,
+				Doc:       item.Doc,
+				Type:      item.Type.Name,
+				Mandatory: item.Mandatory,
+			})
+		}
 		kubeDocs[idx] = k
 	}
+	return kubeDocs
+}
+
+// ToJSON get a slice of KubeTypes as input and return the JSON documentation.
+// JSON fields are the ones defined in kubeTypes (and kubeItem) definition.
+func ToJSON(kt parser.KubeTypes) (string, error) {
+	kubeDocs := convertToKubeTypes(kt)
 
 	j, err := json.MarshalIndent(kubeDocs, "", "\t")
 	return string(j), err

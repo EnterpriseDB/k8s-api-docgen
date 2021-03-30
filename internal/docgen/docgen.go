@@ -23,8 +23,9 @@ import (
 	"os"
 
 	"github.com/EnterpriseDB/k8s-api-docgen/internal/log"
-	"github.com/EnterpriseDB/k8s-api-docgen/pkg/export"
 	"github.com/EnterpriseDB/k8s-api-docgen/pkg/parser"
+	"github.com/EnterpriseDB/k8s-api-docgen/pkg/renderer/json"
+	"github.com/EnterpriseDB/k8s-api-docgen/pkg/renderer/md"
 )
 
 var (
@@ -32,12 +33,26 @@ var (
 	ErrorWrongOutputFormat = fmt.Errorf("wrong output format")
 )
 
+// OutputType is an output type
+type OutputType string
+
+const (
+	// OutputTypeJSON represent the JSON output type
+	OutputTypeJSON = OutputType("json")
+
+	// OutputTypeMD represent the MarkDown output type
+	OutputTypeMD = OutputType("md")
+)
+
 // Extract extract the documentation output from the list of types given the
 // output format
-func Extract(kubeTypes []parser.KubeTypes, format string) (string, error) {
+func Extract(kubeTypes parser.KubeTypes, format OutputType) (string, error) {
 	switch format {
-	case "json":
-		return export.ToJSON(kubeTypes)
+	case OutputTypeJSON:
+		return json.ToJSON(kubeTypes)
+
+	case OutputTypeMD:
+		return md.ToMd(kubeTypes)
 
 	default:
 		return "", ErrorWrongOutputFormat
