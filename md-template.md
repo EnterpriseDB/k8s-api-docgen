@@ -1,5 +1,11 @@
-{{range $}}
-#### {{.NameWithAnchor }}
+<!-- TOC -->
+{{ range $ -}}
+- [{{.Name -}}](#{{.Name -}})
+{{end}}
+
+{{ range $ -}}
+## {{.NameWithAnchor }}
+
 {{.Doc -}}
 {{if .Items }}
 
@@ -9,4 +15,4 @@
 {{- range .Items -}}
 {{.Name }} | {{.Doc }} | {{.RawType }} | {{.Mandatory }}
 {{end}}
-{{end}}
+{{end -}}

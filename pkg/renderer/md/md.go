@@ -32,8 +32,6 @@ const (
 	tableFieldDoc     string = "Doc"
 	tableFieldRawType string = "Type"
 
-	k8sAPIDocgen string = "K8s Api Docgen"
-
 	docPrefix = "https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.20/"
 )
 
@@ -171,10 +169,6 @@ func runTemplate(aTemplate []byte, docs []kubeType) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	_, err = w.WriteString("# " + k8sAPIDocgen + "\n")
-	if err != nil {
-		return "", err
-	}
 	err = tmpl.Execute(&w, docs)
 	if err != nil {
 		return "", err
@@ -184,7 +178,7 @@ func runTemplate(aTemplate []byte, docs []kubeType) (string, error) {
 
 // applyAnchor applies an anchor to name, in order to be compliant with MarkDown output
 func applyAnchor(name string) string {
-	return fmt.Sprintf(`<a name="%v"></a> %v`, name, name)
+	return fmt.Sprintf("<a name='%v'></a> `%v`", name, name)
 }
 
 // wrapInLink generate a Markdown link tag from a type
