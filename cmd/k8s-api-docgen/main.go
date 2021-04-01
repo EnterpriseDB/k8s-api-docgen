@@ -31,6 +31,8 @@ func main() {
 		`Output format. The only supported ones are "json" (JSON) and "md" (Markdown)`)
 	out := flag.String("o", "", "Write output to the given named file. By default "+
 		"the output will be written to stdout")
+	mdDefinitions := flag.String("d", "md-definitions.yaml",
+		"Path of the YAML file containing Markdown mdDefinitions")
 
 	var CommandLine = flag.NewFlagSet(os.Args[0], flag.ExitOnError)
 
@@ -61,7 +63,7 @@ func main() {
 		return
 	}
 
-	output, err := docgen.Extract(kubeTypes, docgen.OutputType(*format))
+	output, err := docgen.Extract(kubeTypes, docgen.OutputType(*format), *mdDefinitions)
 	if err != nil {
 		log.Log.Error(err, "Error while exporting data")
 		return

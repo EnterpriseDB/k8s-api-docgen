@@ -21,38 +21,14 @@ import (
 	"bytes"
 	"fmt"
 	"io/ioutil"
+	"log"
+	"path/filepath"
 	"strings"
 	"text/template"
 
+	"gopkg.in/yaml.v2"
+
 	"github.com/EnterpriseDB/k8s-api-docgen/pkg/parser"
-)
-
-const (
-	tableFieldName    string = "Name"
-	tableFieldDoc     string = "Doc"
-	tableFieldRawType string = "Type"
-
-	docPrefix = "https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.20/"
-)
-
-var (
-	kubernetesLinks = map[string]string{
-		"metav1.ObjectMeta":                docPrefix + "#objectmeta-v1-meta",
-		"metav1.ListMeta":                  docPrefix + "#listmeta-v1-meta",
-		"metav1.LabelSelector":             docPrefix + "#labelselector-v1-meta",
-		"metav1.Time":                      docPrefix + "#time-v1-meta",
-		"v1.ResourceRequirements":          docPrefix + "#resourcerequirements-v1-core",
-		"v1.LocalObjectReference":          docPrefix + "#localobjectreference-v1-core",
-		"v1.SecretKeySelector":             docPrefix + "#secretkeyselector-v1-core",
-		"v1.PersistentVolumeClaim":         docPrefix + "#persistentvolumeclaim-v1-core",
-		"v1.EmptyDirVolumeSource":          docPrefix + "#emptydirvolumesource-v1-core",
-		"apiextensionsv1.JSON":             docPrefix + "#json-v1-apiextensions-k8s-io",
-		"corev1.LocalObjectReference":      docPrefix + "#localobjectreference-v1-core",
-		"corev1.ResourceRequirements":      docPrefix + "#resourcerequirements-v1-core",
-		"corev1.PersistentVolumeClaimSpec": docPrefix + "#persistentvolumeclaim-v1-core",
-		"corev1.SecretKeySelector":         docPrefix + "#secretkeyselector-v1-core",
-		"corev1.ConfigMapKeySelector":      docPrefix + "#configmapkeyselector-v1-core",
-	}
 )
 
 // k8s types for generation of docs
@@ -67,6 +43,7 @@ type kubeType struct {
 	TableFieldDocDashSize     string
 	TableFieldRawType         string
 	TableFieldRawTypeDashSize string
+	TableFieldMandatory       string
 
 	maxSizeOfName    int
 	maxSizeOfDoc     int
@@ -82,8 +59,36 @@ type kubeItem struct {
 	Mandatory bool
 }
 
-// ToMd get a slice of KubeTypes as input and return the Markdown documentation.
-func ToMd(kt parser.KubeTypes) (string, error) {
+// Markdown definitions to be provided via YAML file
+type mdDefinitions struct {
+	TableFieldName      string            `yaml:"name,omitempty"`
+	TableFieldDoc       string            `yaml:"doc,omitempty"`
+	TableFieldRawType   string            `yaml:"type,omitempty"`
+	TableFieldMandatory string            `yaml:"mandatory,omitempty"`
+	K8sURL              string            `yaml:"k8s_url,omitempty"`
+	Version             string            `yaml:"version,omitempty"`
+	Sections            map[string]string `yaml:"sections,omitempty"`
+}
+
+var def mdDefinitions
+
+// ToMd gets a slice of KubeTypes and the path to YAML file of the Markdown definitions.
+// It returns the Markdown documentation.
+func ToMd(kt parser.KubeTypes, mdDefinitions string) (string, error) {
+	yamlFile, err := ioutil.ReadFile(filepath.Clean(mdDefinitions))
+	if err != nil {
+		log.Printf("YAML definitions file:%v not found", mdDefinitions)
+		log.Printf("Applying the default Markdown definitions")
+		def.TableFieldName = "Name"
+		def.TableFieldDoc = "Doc"
+		def.TableFieldRawType = "Type"
+		def.TableFieldMandatory = "Mandatory"
+	} else {
+		err = yaml.Unmarshal(yamlFile, &def)
+		if err != nil {
+			log.Printf("while unmarshalling: %v", err)
+		}
+	}
 	kubeDocs := convertToKubeTypes(kt)
 	format(kubeDocs)
 
@@ -147,17 +152,19 @@ func format(kubeDocs []kubeType) {
 		nameMaxLength := k.maxSizeOfName
 		docMaxLength := k.maxSizeOfDoc
 		rawTypeMaxLength := k.maxSizeOfRawType
-		kubeDocs[i].TableFieldName = rightPad(tableFieldName, abs(nameMaxLength-len(tableFieldName)))
+		kubeDocs[i].TableFieldName = rightPad(def.TableFieldName, abs(nameMaxLength-len(def.TableFieldName)))
 		kubeDocs[i].TableFieldNameDashSize = strings.Repeat("-", nameMaxLength)
-		kubeDocs[i].TableFieldDoc = rightPad(tableFieldDoc, abs(docMaxLength-len(tableFieldDoc)))
+		kubeDocs[i].TableFieldDoc = rightPad(def.TableFieldDoc, abs(docMaxLength-len(def.TableFieldDoc)))
 		kubeDocs[i].TableFieldDocDashSize = strings.Repeat("-", docMaxLength)
-		kubeDocs[i].TableFieldRawType = rightPad(tableFieldRawType, abs(rawTypeMaxLength-len(tableFieldRawType)))
+		kubeDocs[i].TableFieldRawType = rightPad(def.TableFieldRawType, abs(rawTypeMaxLength-len(def.TableFieldRawType)))
 		kubeDocs[i].TableFieldRawTypeDashSize = strings.Repeat("-", rawTypeMaxLength)
+		kubeDocs[i].TableFieldMandatory = rightPad(def.TableFieldMandatory, abs(nameMaxLength-len(def.TableFieldMandatory)))
 		for j, item := range k.Items {
 			kubeDocs[i].Items[j].Name = rightPad(item.Name, nameMaxLength-len(item.Name))
 			kubeDocs[i].Items[j].Doc = rightPad(item.Doc, docMaxLength-len(item.Doc))
 			// adding hyperlinks to documented keys
 			kubeDocs[i].Items[j].RawType = rightPad(kubeDocs[i].Items[j].RawType, rawTypeMaxLength-len(item.RawType))
+			kubeDocs[i].Items[j].Mandatory = item.Mandatory
 		}
 	}
 }
@@ -200,9 +207,9 @@ func wrapInLink(info parser.TypeInfo, internalTypes map[string]bool) string {
 
 	if !info.Internal {
 		// This is an external type so let's hope it is a Kubernetes native one
-		link, ok := kubernetesLinks[info.BaseType]
+		section, ok := def.Sections[info.BaseType]
 		if ok {
-			return fmt.Sprintf("[%v](%v)", info.Name, link)
+			return fmt.Sprintf(`[%v](%v/%v/%v)`, info.Name, def.K8sURL, def.Version, section)
 		}
 	}
 

@@ -9,7 +9,7 @@
 {{.Doc -}}
 {{if .Items }}
 
-{{ .TableFieldName}} | {{ .TableFieldDoc}} | {{ .TableFieldRawType}} | Mandatory
+{{ .TableFieldName}} | {{ .TableFieldDoc}} | {{ .TableFieldRawType}} |  {{ .TableFieldMandatory}}
 {{ .TableFieldNameDashSize}} | {{ .TableFieldDocDashSize}} | {{ .TableFieldRawTypeDashSize}} | ---------
 {{end}}
 {{- range .Items -}}
