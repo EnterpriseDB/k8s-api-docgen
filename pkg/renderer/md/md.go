@@ -72,7 +72,7 @@ var def mdDefinitions
 
 // ToMd gets a slice of KubeTypes and the path to YAML file of the Markdown definitions.
 // It returns the Markdown documentation.
-func ToMd(kt parser.KubeTypes, mdConfiguration string) (string, error) {
+func ToMd(kt parser.KubeTypes, mdConfiguration string, mdTemplatePath string) (string, error) {
 	if mdConfiguration != "" {
 		yamlFile, err := ioutil.ReadFile(mdConfiguration) // #nosec
 		if err != nil {
@@ -92,7 +92,7 @@ func ToMd(kt parser.KubeTypes, mdConfiguration string) (string, error) {
 	kubeDocs := convertToKubeTypes(kt)
 	format(kubeDocs)
 
-	mdTemplate, err := ioutil.ReadFile("md-template.md")
+	mdTemplate, err := ioutil.ReadFile(mdTemplatePath) // #nosec
 	if err != nil {
 		return "", err
 	}
