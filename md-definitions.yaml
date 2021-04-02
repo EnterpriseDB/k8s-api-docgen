@@ -1,8 +1,8 @@
 # Table fields
-name: "Nam"
-doc:  "Do"
-type: "Typ"
-mandatory : "Mandator"
+name: "Name"
+doc:  "Doc"
+type: "Type"
+mandatory : "Mandatory"
 
 # K8s web documentation URL
 k8s_url: "https://kubernetes.io/docs/reference/generated/kubernetes-api"
