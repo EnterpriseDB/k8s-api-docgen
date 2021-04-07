@@ -48,9 +48,9 @@ Using the `-t` option with `md` value, you can also extract the documentation in
 
     $ ./bin/k8s-api-docgen -t md -o documentation.md ../operator/api/v1/*types.go
 
-If you provide a `-d` option, you could specify your custom file in YAML format via
+If you provide a `-c` option, you could specify your custom configuration file in YAML format via
 
-    $ ./bin/k8s-api-docgen -t md -d md-definitions.yaml -o documentation.md ../operator/api/v1/*types.go
+    $ ./bin/k8s-api-docgen -t md -c md-configuration.yaml -o documentation.md ../operator/api/v1/*types.go
 
 This option is useful for linking K8s documentation to types and customizing table headers.
 

@@ -9,7 +9,7 @@ k8s_url: "https://kubernetes.io/docs/reference/generated/kubernetes-api"
 version: "v1.20"
 
 # hyperlinks will be completed by the tool in the following way
-# k8s_docs + "/" + version + "/" + section element
+# k8s_url + "/" + version + "/" + section element
 # e.g. metav1.ObjectMeta --> https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.20/#objectmeta-v1-meta
 sections:
   metav1.ObjectMeta: "#objectmeta-v1-meta"

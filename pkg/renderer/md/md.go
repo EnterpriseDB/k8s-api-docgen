@@ -57,8 +57,8 @@ type kubeItem struct {
 	Mandatory bool
 }
 
-// Markdown definitions to be provided via YAML file
-type mdDefinitions struct {
+// Markdown configuration to be provided via YAML file
+type mdConfiguration struct {
 	TableFieldName      string            `yaml:"name,omitempty"`
 	TableFieldDoc       string            `yaml:"doc,omitempty"`
 	TableFieldRawType   string            `yaml:"type,omitempty"`
@@ -68,9 +68,9 @@ type mdDefinitions struct {
 	Sections            map[string]string `yaml:"sections,omitempty"`
 }
 
-var def mdDefinitions
+var conf mdConfiguration
 
-// ToMd gets a slice of KubeTypes and the path to YAML file of the Markdown definitions.
+// ToMd gets a slice of KubeTypes and the path to YAML file of the Markdown configuration.
 // It returns the Markdown documentation.
 func ToMd(kt parser.KubeTypes, mdConfiguration string, mdTemplatePath string) (string, error) {
 	if mdConfiguration != "" {
@@ -79,14 +79,14 @@ func ToMd(kt parser.KubeTypes, mdConfiguration string, mdTemplatePath string) (s
 			return "", err
 		}
 
-		if err = yaml.Unmarshal(yamlFile, &def); err != nil {
+		if err = yaml.Unmarshal(yamlFile, &conf); err != nil {
 			return "", err
 		}
 	} else {
-		def.TableFieldName = "Name"
-		def.TableFieldDoc = "Doc"
-		def.TableFieldRawType = "Type"
-		def.TableFieldMandatory = "Mandatory"
+		conf.TableFieldName = "Name"
+		conf.TableFieldDoc = "Doc"
+		conf.TableFieldRawType = "Type"
+		conf.TableFieldMandatory = "Mandatory"
 	}
 
 	kubeDocs := convertToKubeTypes(kt)
@@ -152,13 +152,13 @@ func format(kubeDocs []kubeType) {
 		nameMaxLength := k.maxSizeOfName
 		docMaxLength := k.maxSizeOfDoc
 		rawTypeMaxLength := k.maxSizeOfRawType
-		kubeDocs[i].TableFieldName = rightPad(def.TableFieldName, abs(nameMaxLength-len(def.TableFieldName)))
+		kubeDocs[i].TableFieldName = rightPad(conf.TableFieldName, abs(nameMaxLength-len(conf.TableFieldName)))
 		kubeDocs[i].TableFieldNameDashSize = strings.Repeat("-", nameMaxLength)
-		kubeDocs[i].TableFieldDoc = rightPad(def.TableFieldDoc, abs(docMaxLength-len(def.TableFieldDoc)))
+		kubeDocs[i].TableFieldDoc = rightPad(conf.TableFieldDoc, abs(docMaxLength-len(conf.TableFieldDoc)))
 		kubeDocs[i].TableFieldDocDashSize = strings.Repeat("-", docMaxLength)
-		kubeDocs[i].TableFieldRawType = rightPad(def.TableFieldRawType, abs(rawTypeMaxLength-len(def.TableFieldRawType)))
+		kubeDocs[i].TableFieldRawType = rightPad(conf.TableFieldRawType, abs(rawTypeMaxLength-len(conf.TableFieldRawType)))
 		kubeDocs[i].TableFieldRawTypeDashSize = strings.Repeat("-", rawTypeMaxLength)
-		kubeDocs[i].TableFieldMandatory = rightPad(def.TableFieldMandatory, abs(nameMaxLength-len(def.TableFieldMandatory)))
+		kubeDocs[i].TableFieldMandatory = rightPad(conf.TableFieldMandatory, abs(nameMaxLength-len(conf.TableFieldMandatory)))
 		for j, item := range k.Items {
 			kubeDocs[i].Items[j].Name = rightPad(item.Name, nameMaxLength-len(item.Name))
 			kubeDocs[i].Items[j].Doc = rightPad(item.Doc, docMaxLength-len(item.Doc))
@@ -207,9 +207,9 @@ func wrapInLink(info parser.TypeInfo, internalTypes map[string]bool) string {
 
 	if !info.Internal {
 		// This is an external type so let's hope it is a Kubernetes native one
-		section, ok := def.Sections[info.BaseType]
+		section, ok := conf.Sections[info.BaseType]
 		if ok {
-			return fmt.Sprintf(`[%v](%v/%v/%v)`, info.Name, def.K8sURL, def.Version, section)
+			return fmt.Sprintf(`[%v](%v/%v/%v)`, info.Name, conf.K8sURL, conf.Version, section)
 		}
 	}
 
