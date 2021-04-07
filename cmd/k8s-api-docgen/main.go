@@ -31,11 +31,14 @@ func main() {
 		`Output format. The only supported ones are "json" (JSON) and "md" (Markdown)`)
 	out := flag.String("o", "", "Write output to the given named file. By default "+
 		"the output will be written to stdout")
+	mdConfiguration := flag.String("c", "md-configuration.yaml",
+		"Path of the YAML file containing Markdown configuration. By default the "+
+			"configuration will be read from 'md-configuration.yaml'")
 
 	var CommandLine = flag.NewFlagSet(os.Args[0], flag.ExitOnError)
 
 	flag.Usage = func() {
-		fmt.Fprintf(CommandLine.Output(), "Usage:\n  k8s-api-docgen [flags] path\n\n")
+		_, _ = fmt.Fprintf(CommandLine.Output(), "Usage:\n  k8s-api-docgen [flags] path\n\n")
 		flag.PrintDefaults()
 	}
 
@@ -61,7 +64,7 @@ func main() {
 		return
 	}
 
-	output, err := docgen.Extract(kubeTypes, docgen.OutputType(*format))
+	output, err := docgen.Extract(kubeTypes, docgen.OutputType(*format), *mdConfiguration)
 	if err != nil {
 		log.Log.Error(err, "Error while exporting data")
 		return

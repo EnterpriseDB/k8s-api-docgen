@@ -44,6 +44,16 @@ create a file, you can use the `-o` option as follows:
 
     $ ./bin/k8s-api-docgen -o documentation.json ../operator/api/v1/*types.go
 
+Using the `-t` option with `md` value, you can also extract the documentation in Markdown format via:
+
+    $ ./bin/k8s-api-docgen -t md -o documentation.md ../operator/api/v1/*types.go
+
+If you provide a `-c` option, you could specify your custom configuration file in YAML format via
+
+    $ ./bin/k8s-api-docgen -t md -c md-configuration.yaml -o documentation.md ../operator/api/v1/*types.go
+
+This option is useful for linking K8s documentation to types and customizing table headers.
+
 ## Copyright
 
 `k8s-api-docgen` is distributed under Apache License 2.0.

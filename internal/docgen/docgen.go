@@ -44,22 +44,22 @@ const (
 	OutputTypeMD = OutputType("md")
 )
 
-// Extract extract the documentation output from the list of types given the
-// output format
-func Extract(kubeTypes parser.KubeTypes, format OutputType) (string, error) {
+// Extract extracts the documentation output from the list of types given the
+// output format and the markdown configuration file path
+func Extract(kubeTypes parser.KubeTypes, format OutputType, mdConfiguration string) (string, error) {
 	switch format {
 	case OutputTypeJSON:
 		return json.ToJSON(kubeTypes)
 
 	case OutputTypeMD:
-		return md.ToMd(kubeTypes)
+		return md.ToMd(kubeTypes, mdConfiguration)
 
 	default:
 		return "", ErrorWrongOutputFormat
 	}
 }
 
-// Output write the documentation to a certain file. If the filename
+// Output writes the documentation to a certain file. If the filename
 // is empty the documentation is written to stdout
 func Output(fileName string, content string) error {
 	outputStream := os.Stdout
