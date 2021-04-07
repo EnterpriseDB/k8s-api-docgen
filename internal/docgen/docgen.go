@@ -45,14 +45,14 @@ const (
 )
 
 // Extract extracts the documentation output from the list of types given the
-// output format and the definitions file path
-func Extract(kubeTypes parser.KubeTypes, format OutputType, mdDefinitions string) (string, error) {
+// output format and the markdown configuration file path
+func Extract(kubeTypes parser.KubeTypes, format OutputType, mdConfiguration string) (string, error) {
 	switch format {
 	case OutputTypeJSON:
 		return json.ToJSON(kubeTypes)
 
 	case OutputTypeMD:
-		return md.ToMd(kubeTypes, mdDefinitions)
+		return md.ToMd(kubeTypes, mdConfiguration)
 
 	default:
 		return "", ErrorWrongOutputFormat

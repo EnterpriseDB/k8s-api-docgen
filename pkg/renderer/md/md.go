@@ -21,8 +21,6 @@ import (
 	"bytes"
 	"fmt"
 	"io/ioutil"
-	"log"
-	"path/filepath"
 	"strings"
 	"text/template"
 
@@ -74,21 +72,23 @@ var def mdDefinitions
 
 // ToMd gets a slice of KubeTypes and the path to YAML file of the Markdown definitions.
 // It returns the Markdown documentation.
-func ToMd(kt parser.KubeTypes, mdDefinitions string) (string, error) {
-	yamlFile, err := ioutil.ReadFile(filepath.Clean(mdDefinitions))
-	if err != nil {
-		log.Printf("YAML definitions file:%v not found", mdDefinitions)
-		log.Printf("Applying the default Markdown definitions")
+func ToMd(kt parser.KubeTypes, mdConfiguration string) (string, error) {
+	if mdConfiguration != "" {
+		yamlFile, err := ioutil.ReadFile(mdConfiguration) // #nosec
+		if err != nil {
+			return "", err
+		}
+
+		if err = yaml.Unmarshal(yamlFile, &def); err != nil {
+			return "", err
+		}
+	} else {
 		def.TableFieldName = "Name"
 		def.TableFieldDoc = "Doc"
 		def.TableFieldRawType = "Type"
 		def.TableFieldMandatory = "Mandatory"
-	} else {
-		err = yaml.Unmarshal(yamlFile, &def)
-		if err != nil {
-			log.Printf("while unmarshalling: %v", err)
-		}
 	}
+
 	kubeDocs := convertToKubeTypes(kt)
 	format(kubeDocs)
 
