@@ -34,6 +34,9 @@ func main() {
 	mdConfiguration := flag.String("c", "md-configuration.yaml",
 		"Path of the YAML file containing Markdown configuration. By default the "+
 			"configuration will be read from 'md-configuration.yaml'")
+	mdTemplate := flag.String("m", "md-template.md",
+		"Path of the Markdown template file for generating Markdown documentation. By default the "+
+			"Markdown template will be read from 'md-template.md'")
 
 	var CommandLine = flag.NewFlagSet(os.Args[0], flag.ExitOnError)
 
@@ -64,7 +67,7 @@ func main() {
 		return
 	}
 
-	output, err := docgen.Extract(kubeTypes, docgen.OutputType(*format), *mdConfiguration)
+	output, err := docgen.Extract(kubeTypes, docgen.OutputType(*format), *mdConfiguration, *mdTemplate)
 	if err != nil {
 		log.Log.Error(err, "Error while exporting data")
 		return
