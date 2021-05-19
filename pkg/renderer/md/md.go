@@ -185,7 +185,7 @@ func runTemplate(aTemplate []byte, docs []kubeType) (string, error) {
 
 // applyAnchor applies an anchor to name, in order to be compliant with MarkDown output
 func applyAnchor(name string) string {
-	return fmt.Sprintf("<a name='%v'></a> `%v`", name, name)
+	return fmt.Sprintf("<a id='%v'></a>", name)
 }
 
 // wrapInLink generate a Markdown link tag from a type
