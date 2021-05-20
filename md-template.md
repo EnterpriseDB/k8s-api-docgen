@@ -1,19 +1,19 @@
 <!-- TOC -->
 {{ range $ -}}
-- [{{.Name -}}](#{{.Name -}})
-{{end}}
+- [{{ .Name -}}](#{{ .Name -}})
+{{ end }}
 
 {{ range $ -}}
-{{ .NameWithAnchor }}
-## {{ .Name}}
+{{ .Anchor }}
+## {{ .Name }}
 
-{{.Doc -}}
-{{if .Items }}
+{{ .Doc -}}
+{{ if .Items }}
 
-{{ .TableFieldName}} | {{ .TableFieldDoc}} | {{ .TableFieldRawType}} |  {{ .TableFieldMandatory}}
-{{ .TableFieldNameDashSize}} | {{ .TableFieldDocDashSize}} | {{ .TableFieldRawTypeDashSize}} | ---------
-{{end}}
+{{ .TableFieldName }} | {{ .TableFieldDoc }} | {{ .TableFieldRawType }}
+{{ .TableFieldNameDashSize }} | {{ .TableFieldDocDashSize }} | {{ .TableFieldRawTypeDashSize }}
+{{ end }}
 {{- range .Items -}}
-{{.Name }} | {{.Doc }} | {{.RawType }} | {{.Mandatory }}
-{{end}}
-{{end -}}
+`{{ .Name }}` | {{ .Doc }}{{ if .Mandatory }} - *mandatory* {{ end }} | {{ .RawType }}
+{{ end }}
+{{ end -}}
