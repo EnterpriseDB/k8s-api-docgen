@@ -33,6 +33,7 @@ import (
 type kubeType struct {
 	Name                      string
 	NameWithAnchor            string
+	Anchor                    string
 	Doc                       string
 	Items                     []kubeItem
 	TableFieldName            string
@@ -113,7 +114,8 @@ func convertToKubeTypes(kt parser.KubeTypes) []kubeType {
 	for idx, kubeStructure := range kt {
 		k := kubeType{
 			Name:                      kubeStructure.Name,
-			NameWithAnchor:            applyAnchor(kubeStructure.Name),
+			Anchor:                    applyAnchor(kubeStructure.Name),
+			NameWithAnchor:            applyNameWithAnchor(kubeStructure.Name),
 			Doc:                       kubeStructure.Doc,
 			Items:                     nil,
 			TableFieldName:            "",
@@ -183,9 +185,14 @@ func runTemplate(aTemplate []byte, docs []kubeType) (string, error) {
 	return w.String(), nil
 }
 
-// applyAnchor applies an anchor to name, in order to be compliant with MarkDown output
+// applyAnchor applies an anchor, in order to be compliant with MarkDown output
 func applyAnchor(name string) string {
 	return fmt.Sprintf("<a id='%v'></a>", name)
+}
+
+// applyNameWithAnchor applies an anchor and a name, in order to be compliant with MarkDown output
+func applyNameWithAnchor(name string) string {
+	return fmt.Sprintf("<a id='%v'></a>`%v`", name, name)
 }
 
 // wrapInLink generate a Markdown link tag from a type
