@@ -5,7 +5,7 @@
 
 {{ range $ -}}
 {{ .Anchor }}
-## {{ .Name}}
+## {{ .Name }}
 
 {{ .Doc -}}
 {{if .Items }}
