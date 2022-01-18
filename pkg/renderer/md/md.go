@@ -126,10 +126,10 @@ func convertToKubeTypes(kt parser.KubeTypes) []kubeType {
 			TableFieldRawTypeDashSize: "",
 		}
 
-		var kItems []kubeItem
+		var items []kubeItem
 		for _, item := range kubeStructure.Fields {
 			typeField := wrapInLink(item.Type, internalTypes)
-			kItems = append(kItems, kubeItem{
+			items = append(items, kubeItem{
 				Name:      item.Name,
 				Doc:       item.Doc,
 				Type:      item.Type.Name,
@@ -141,7 +141,7 @@ func convertToKubeTypes(kt parser.KubeTypes) []kubeType {
 			k.maxSizeOfDoc = max(k.maxSizeOfDoc, len(item.Doc))
 			k.maxSizeOfRawType = max(k.maxSizeOfRawType, len(typeField))
 		}
-		k.Items = kItems
+		k.Items = items
 		kubeDocs[idx] = k
 	}
 	return kubeDocs

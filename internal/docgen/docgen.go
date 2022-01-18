@@ -28,10 +28,8 @@ import (
 	"github.com/EnterpriseDB/k8s-api-docgen/pkg/renderer/md"
 )
 
-var (
-	// ErrorWrongOutputFormat means that the used specified an output format which we don't support
-	ErrorWrongOutputFormat = fmt.Errorf("wrong output format")
-)
+// ErrorWrongOutputFormat means that the used specified an output format which we don't support
+var ErrorWrongOutputFormat = fmt.Errorf("wrong output format")
 
 // OutputType is an output type
 type OutputType string
@@ -65,18 +63,17 @@ func Output(fileName string, content string) error {
 	outputStream := os.Stdout
 	var err error
 	if fileName != "" {
-		outputStream, err = os.OpenFile(fileName, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600) // #nosec
+		outputStream, err = os.OpenFile(fileName, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0o600) // #nosec
 		if err != nil {
 			return err
 		}
-
 		defer func() {
 			err = outputStream.Close()
 			if err != nil {
 				log.Log.Error(err, "Cannot close output file",
 					"fileName", fileName)
 			}
-		}()
+		}() // #nosec G307
 	}
 
 	_, err = outputStream.Write([]byte(content))
