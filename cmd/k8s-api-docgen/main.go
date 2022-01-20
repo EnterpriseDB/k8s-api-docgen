@@ -38,7 +38,7 @@ func main() {
 		"Path of the Markdown template file for generating Markdown documentation. By default the "+
 			"Markdown template will be read from 'md-template.md'")
 
-	var CommandLine = flag.NewFlagSet(os.Args[0], flag.ExitOnError)
+	CommandLine := flag.NewFlagSet(os.Args[0], flag.ExitOnError)
 
 	flag.Usage = func() {
 		_, _ = fmt.Fprintf(CommandLine.Output(), "Usage:\n  k8s-api-docgen [flags] path\n\n")

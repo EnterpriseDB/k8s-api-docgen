@@ -126,10 +126,10 @@ func convertToKubeTypes(kt parser.KubeTypes) []kubeType {
 			TableFieldRawTypeDashSize: "",
 		}
 
-		var kItems []kubeItem
+		var items []kubeItem
 		for _, item := range kubeStructure.Fields {
 			typeField := wrapInLink(item.Type, internalTypes)
-			kItems = append(kItems, kubeItem{
+			items = append(items, kubeItem{
 				Name:      item.Name,
 				Doc:       item.Doc,
 				Type:      item.Type.Name,
@@ -141,7 +141,7 @@ func convertToKubeTypes(kt parser.KubeTypes) []kubeType {
 			k.maxSizeOfDoc = max(k.maxSizeOfDoc, len(item.Doc))
 			k.maxSizeOfRawType = max(k.maxSizeOfRawType, len(typeField))
 		}
-		k.Items = kItems
+		k.Items = items
 		kubeDocs[idx] = k
 	}
 	return kubeDocs
@@ -149,6 +149,7 @@ func convertToKubeTypes(kt parser.KubeTypes) []kubeType {
 
 // format applies proper formats to tables and documentation
 func format(kubeDocs []kubeType) {
+	const minDocLength = 3
 	for i, k := range kubeDocs {
 		kubeDocs[i].Doc = strings.Trim(k.Doc, "\n")
 		nameMaxLength := k.maxSizeOfName
@@ -157,7 +158,7 @@ func format(kubeDocs []kubeType) {
 		kubeDocs[i].TableFieldName = rightPad(conf.TableFieldName, abs(nameMaxLength-len(conf.TableFieldName)))
 		kubeDocs[i].TableFieldNameDashSize = strings.Repeat("-", nameMaxLength)
 		kubeDocs[i].TableFieldDoc = rightPad(conf.TableFieldDoc, abs(docMaxLength-len(conf.TableFieldDoc)))
-		kubeDocs[i].TableFieldDocDashSize = strings.Repeat("-", docMaxLength)
+		kubeDocs[i].TableFieldDocDashSize = strings.Repeat("-", max(docMaxLength, minDocLength))
 		kubeDocs[i].TableFieldRawType = rightPad(conf.TableFieldRawType, abs(rawTypeMaxLength-len(conf.TableFieldRawType)))
 		kubeDocs[i].TableFieldRawTypeDashSize = strings.Repeat("-", rawTypeMaxLength)
 		kubeDocs[i].TableFieldMandatory = rightPad(conf.TableFieldMandatory, abs(nameMaxLength-len(conf.TableFieldMandatory)))
