@@ -122,9 +122,12 @@ func fmtRawDoc(rawDoc string) string {
 }
 
 func isInlined(field *ast.Field) bool {
-	jsonTag := reflect.StructTag(
-		field.Tag.Value[1 : len(field.Tag.Value)-1]).Get("json") // Delete first and last quotation
-	return strings.Contains(jsonTag, "inline")
+	if field.Tag != nil {
+		jsonTag := reflect.StructTag(
+			field.Tag.Value[1 : len(field.Tag.Value)-1]).Get("json") // Delete first and last quotation
+		return strings.Contains(jsonTag, "inline")
+	}
+	return false
 }
 
 // fieldName returns the name of the field as it should appear in JSON format
