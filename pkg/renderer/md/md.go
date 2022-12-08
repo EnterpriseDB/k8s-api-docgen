@@ -24,6 +24,8 @@ import (
 	"strings"
 	"text/template"
 
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 	"gopkg.in/yaml.v2"
 
 	"github.com/EnterpriseDB/k8s-api-docgen/pkg/parser"
@@ -198,7 +200,8 @@ func applyNameWithAnchor(name string) string {
 
 // wrapInLink generate a Markdown link tag from a type
 func wrapInLink(info parser.TypeInfo, internalTypes map[string]bool) string {
-	if info.Internal && strings.Title(info.BaseType) == info.BaseType {
+	caser := cases.Title(language.Und)
+	if info.Internal && caser.String(info.BaseType) == info.BaseType {
 		// This is an internal type exported, so it is user-defined.
 		// Is this a documented type or not?
 		_, documented := internalTypes[info.BaseType]
