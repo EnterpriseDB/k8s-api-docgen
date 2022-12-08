@@ -20,7 +20,7 @@ package md
 import (
 	"bytes"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"strings"
 	"text/template"
 
@@ -77,7 +77,7 @@ var conf mdConfiguration
 // It returns the Markdown documentation.
 func ToMd(kt parser.KubeTypes, mdConfiguration string, mdTemplate string) (string, error) {
 	if mdConfiguration != "" {
-		configurationFile, err := ioutil.ReadFile(mdConfiguration) // #nosec
+		configurationFile, err := os.ReadFile(mdConfiguration) // #nosec
 		if err != nil {
 			return "", err
 		}
@@ -95,7 +95,7 @@ func ToMd(kt parser.KubeTypes, mdConfiguration string, mdTemplate string) (strin
 	kubeDocs := convertToKubeTypes(kt)
 	format(kubeDocs)
 
-	templateFile, err := ioutil.ReadFile(mdTemplate) // #nosec
+	templateFile, err := os.ReadFile(mdTemplate) // #nosec
 	if err != nil {
 		return "", err
 	}
