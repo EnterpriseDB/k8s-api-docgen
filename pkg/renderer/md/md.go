@@ -20,10 +20,12 @@ package md
 import (
 	"bytes"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"strings"
 	"text/template"
 
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 	"gopkg.in/yaml.v2"
 
 	"github.com/EnterpriseDB/k8s-api-docgen/pkg/parser"
@@ -75,7 +77,7 @@ var conf mdConfiguration
 // It returns the Markdown documentation.
 func ToMd(kt parser.KubeTypes, mdConfiguration string, mdTemplate string) (string, error) {
 	if mdConfiguration != "" {
-		configurationFile, err := ioutil.ReadFile(mdConfiguration) // #nosec
+		configurationFile, err := os.ReadFile(mdConfiguration) // #nosec
 		if err != nil {
 			return "", err
 		}
@@ -93,7 +95,7 @@ func ToMd(kt parser.KubeTypes, mdConfiguration string, mdTemplate string) (strin
 	kubeDocs := convertToKubeTypes(kt)
 	format(kubeDocs)
 
-	templateFile, err := ioutil.ReadFile(mdTemplate) // #nosec
+	templateFile, err := os.ReadFile(mdTemplate) // #nosec
 	if err != nil {
 		return "", err
 	}
@@ -198,7 +200,8 @@ func applyNameWithAnchor(name string) string {
 
 // wrapInLink generate a Markdown link tag from a type
 func wrapInLink(info parser.TypeInfo, internalTypes map[string]bool) string {
-	if info.Internal && strings.Title(info.BaseType) == info.BaseType {
+	caser := cases.Title(language.Und)
+	if info.Internal && caser.String(info.BaseType) == info.BaseType {
 		// This is an internal type exported, so it is user-defined.
 		// Is this a documented type or not?
 		_, documented := internalTypes[info.BaseType]
