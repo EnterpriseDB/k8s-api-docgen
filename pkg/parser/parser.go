@@ -58,12 +58,6 @@ func GetKubeTypes(filePaths []string) (KubeTypes, error) {
 			}
 
 			for _, field := range structType.Fields.List {
-				// TODO: manage inlined fields
-				if isInlined(field) {
-					// TODO: Ask Gabriele why typesDoc was not used
-					continue
-				}
-
 				typeInfo := fieldType(field.Type)
 				fieldMandatory := fieldRequired(field)
 				if n := fieldName(field); n != "-" {
