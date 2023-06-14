@@ -148,8 +148,8 @@ func fieldName(field *ast.Field) string {
 			return field.Names[0].Name
 		}
 
-		// when field is inline, the type is different from '*ast.Ident' (actually it is '*ast.Ident')
-		// we can return empty json tag if not '*ast.Ident', as default
+		// when there is an inline field, the type is different from '*ast.Ident'(actually it is '*ast.SelectorExpr')
+		// we can return empty json tag if not '*ast.Ident', as default, when switching over the field type
 		switch t := (field.Type).(type) {
 		case *ast.Ident:
 			return t.Name
