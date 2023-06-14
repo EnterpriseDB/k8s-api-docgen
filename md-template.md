@@ -14,6 +14,6 @@
 {{ .TableFieldNameDashSize }} | {{ .TableFieldDocDashSize }} | {{ .TableFieldRawTypeDashSize }}
 {{ end }}
 {{- range .Items -}}
-`{{ .Name }}` | {{ .Doc }}{{ if .Mandatory }} - *mandatory* {{ end }} | {{ .RawType }}
+`{{ .Name }}` | {{ .Doc }}{{ if .Mandatory }} - *mandatory* {{ end }} {{ if .Inline }} - *inline* {{ end }} | {{ .RawType }}
 {{ end }}
 {{ end -}}

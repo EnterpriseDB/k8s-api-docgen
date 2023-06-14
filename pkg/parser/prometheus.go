@@ -43,6 +43,9 @@ type KubeField struct {
 
 	// Mandatory flag
 	Mandatory bool
+
+	// Inline flag
+	Inline bool
 }
 
 // TypeInfo is a struct representing a type with a given name and it's base type name.
@@ -147,13 +150,21 @@ func fieldName(field *ast.Field) string {
 		if field.Names != nil {
 			return field.Names[0].Name
 		}
-		return field.Type.(*ast.Ident).Name
+
+		// when there is an inline field, the type is different from '*ast.Ident'(actually it is '*ast.SelectorExpr')
+		// we can return empty json tag if not '*ast.Ident', as default, when switching over the field type
+		switch t := (field.Type).(type) {
+		case *ast.Ident:
+			return t.Name
+		default:
+			return ""
+		}
 	}
 	return jsonTag
 }
 
-// fieldRequired returns whether a field is a required field.
-func fieldRequired(field *ast.Field) bool {
+// isRequired returns whether a field is a required field.
+func isRequired(field *ast.Field) bool {
 	jsonTag := ""
 	if field.Tag != nil {
 		jsonTag = reflect.StructTag(

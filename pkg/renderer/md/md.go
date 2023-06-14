@@ -44,6 +44,7 @@ type kubeType struct {
 	TableFieldRawType         string
 	TableFieldRawTypeDashSize string
 	TableFieldMandatory       string
+	TableFieldInline          string
 
 	maxSizeOfName    int
 	maxSizeOfDoc     int
@@ -57,6 +58,7 @@ type kubeItem struct {
 	Type      string
 	RawType   string
 	Mandatory bool
+	Inline    bool
 }
 
 // Markdown configuration to be provided via YAML file
@@ -65,6 +67,7 @@ type mdConfiguration struct {
 	TableFieldDoc       string            `yaml:"doc,omitempty"`
 	TableFieldRawType   string            `yaml:"type,omitempty"`
 	TableFieldMandatory string            `yaml:"mandatory,omitempty"`
+	TableFieldInline    string            `yaml:"inline,omitempty"`
 	K8sURL              string            `yaml:"k8s_url,omitempty"`
 	Version             string            `yaml:"version,omitempty"`
 	Sections            map[string]string `yaml:"sections,omitempty"`
@@ -89,6 +92,7 @@ func ToMd(kt parser.KubeTypes, mdConfiguration string, mdTemplate string) (strin
 		conf.TableFieldDoc = "Doc"
 		conf.TableFieldRawType = "Type"
 		conf.TableFieldMandatory = "Mandatory"
+		conf.TableFieldInline = "Inline"
 	}
 
 	kubeDocs := convertToKubeTypes(kt)
@@ -129,6 +133,9 @@ func convertToKubeTypes(kt parser.KubeTypes) []kubeType {
 
 		var items []kubeItem
 		for _, item := range kubeStructure.Fields {
+			if item.Name == "" {
+				continue
+			}
 			typeField := wrapInLink(item.Type, internalTypes)
 			items = append(items, kubeItem{
 				Name:      item.Name,
@@ -136,6 +143,7 @@ func convertToKubeTypes(kt parser.KubeTypes) []kubeType {
 				Type:      item.Type.Name,
 				RawType:   typeField,
 				Mandatory: item.Mandatory,
+				Inline:    item.Inline,
 			})
 
 			k.maxSizeOfName = max(k.maxSizeOfName, len(item.Name))
@@ -163,12 +171,14 @@ func format(kubeDocs []kubeType) {
 		kubeDocs[i].TableFieldRawType = rightPad(conf.TableFieldRawType, abs(rawTypeMaxLength-len(conf.TableFieldRawType)))
 		kubeDocs[i].TableFieldRawTypeDashSize = strings.Repeat("-", rawTypeMaxLength)
 		kubeDocs[i].TableFieldMandatory = rightPad(conf.TableFieldMandatory, abs(nameMaxLength-len(conf.TableFieldMandatory)))
+		kubeDocs[i].TableFieldInline = rightPad(conf.TableFieldInline, abs(nameMaxLength-len(conf.TableFieldInline)))
 		for j, item := range k.Items {
 			kubeDocs[i].Items[j].Name = rightPad(item.Name, nameMaxLength-len(item.Name))
 			kubeDocs[i].Items[j].Doc = rightPad(item.Doc, docMaxLength-len(item.Doc))
 			// adding hyperlinks to documented keys
 			kubeDocs[i].Items[j].RawType = rightPad(kubeDocs[i].Items[j].RawType, rawTypeMaxLength-len(item.RawType))
 			kubeDocs[i].Items[j].Mandatory = item.Mandatory
+			kubeDocs[i].Items[j].Inline = item.Inline
 		}
 	}
 }

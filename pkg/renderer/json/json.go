@@ -36,6 +36,7 @@ type kubeItem struct {
 	Doc       string `json:"description"`
 	Type      string `json:"schema"`
 	Mandatory bool   `json:"required"`
+	Inline    bool   `json:"inline"`
 }
 
 func convertToKubeTypes(kt parser.KubeTypes) []kubeType {
@@ -53,6 +54,7 @@ func convertToKubeTypes(kt parser.KubeTypes) []kubeType {
 				Doc:       item.Doc,
 				Type:      item.Type.Name,
 				Mandatory: item.Mandatory,
+				Inline:    item.Inline,
 			})
 		}
 		kubeDocs[idx] = k
