@@ -59,7 +59,8 @@ func GetKubeTypes(filePaths []string) (KubeTypes, error) {
 
 			for _, field := range structType.Fields.List {
 				typeInfo := fieldType(field.Type)
-				fieldMandatory := fieldRequired(field)
+				fieldMandatory := isRequired(field)
+				fieldInline := isInlined(field)
 				if n := fieldName(field); n != "-" {
 					fieldDoc := fmtRawDoc(field.Doc.Text())
 					kubeStructure.Fields = append(kubeStructure.Fields,
@@ -68,6 +69,7 @@ func GetKubeTypes(filePaths []string) (KubeTypes, error) {
 							Type:      typeInfo,
 							Doc:       fieldDoc,
 							Mandatory: fieldMandatory,
+							Inline:    fieldInline,
 						})
 				}
 			}

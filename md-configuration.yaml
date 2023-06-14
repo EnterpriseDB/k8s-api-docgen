@@ -2,11 +2,10 @@
 name: "Name"
 doc:  "Doc"
 type: "Type"
-mandatory : "Mandatory"
 
 # K8s web documentation URL
 k8s_url: "https://kubernetes.io/docs/reference/generated/kubernetes-api"
-version: "v1.20"
+version: "v1.27"
 
 # hyperlinks will be completed by the tool in the following way
 # k8s_url + "/" + version + "/" + section element
